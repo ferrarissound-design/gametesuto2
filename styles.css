@@ -121,6 +121,19 @@ button {
   font-size: 20px;
   font-weight: 900;
   box-shadow: 0 10px 24px rgba(255, 79, 216, 0.36);
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
 }
 
+button:hover { filter: brightness(1.15); }
 button:active { transform: translateY(2px) scale(0.99); }
+
+@keyframes pulse-warn {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+.time-warn {
+  animation: pulse-warn 0.6s ease-in-out infinite;
+  display: inline-block;
+}
