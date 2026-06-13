@@ -1,0 +1,126 @@
+:root {
+  color-scheme: dark;
+  font-family: "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --bg: #101b3f;
+  --pink: #ff4fd8;
+  --cyan: #48f7ff;
+  --yellow: #ffe66d;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #273b8f 0%, var(--bg) 48%, #060914 100%);
+  color: white;
+  touch-action: none;
+  user-select: none;
+}
+
+.game-shell {
+  position: relative;
+  width: min(100vw, 520px);
+  height: 100dvh;
+  min-height: 560px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-inline: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 48px rgba(72, 247, 255, 0.18);
+}
+
+.hud {
+  position: absolute;
+  inset: env(safe-area-inset-top) 12px auto;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.hud-card {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(8, 14, 35, 0.68);
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.hud-card span {
+  display: block;
+  color: #b8c7ff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hud-card strong {
+  font-size: clamp(22px, 7vw, 34px);
+  color: var(--yellow);
+  text-shadow: 0 0 12px rgba(255, 230, 109, 0.7);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(6, 9, 20, 0.35), rgba(6, 9, 20, 0.86));
+}
+
+.overlay.hidden { display: none; }
+
+.panel {
+  width: min(100%, 420px);
+  padding: 24px;
+  border: 2px solid rgba(72, 247, 255, 0.45);
+  border-radius: 28px;
+  background: rgba(12, 20, 52, 0.9);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.36), 0 0 28px rgba(255, 79, 216, 0.18);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--cyan);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(32px, 10vw, 50px);
+  line-height: 1;
+  color: var(--yellow);
+}
+
+p, li {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+ul {
+  padding-left: 1.2em;
+}
+
+button {
+  width: 100%;
+  min-height: 58px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink), #7d5cff 55%, var(--cyan));
+  color: white;
+  font-size: 20px;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(255, 79, 216, 0.36);
+}
+
+button:active { transform: translateY(2px) scale(0.99); }
