@@ -97,42 +97,100 @@ function spawnParticles(x, y, color) {
   }
 }
 
-function drawBackground(width, height, delta) {
+// 奥（画面上端）で小さく、手前（プレイヤー位置）で大きくなる遠近スケール
+function perspectiveScale(y, playerY) {
+  const t = Math.max(0, Math.min(1, (y + 30) / (playerY + 30)));
+  return 0.35 + t * 0.9;
+}
+
+function drawBackground(width, height, delta, playerX) {
   if (!state.stars.length) {
-    state.stars = Array.from({ length: 70 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      size: 1 + Math.random() * 2.4,
-      speed: 15 + Math.random() * 42,
-    }));
+    // 3層のパララックス星空（z: 0=遠い〜1=近い）
+    state.stars = Array.from({ length: 90 }, () => {
+      const z = Math.random();
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        z,
+        size: 0.6 + z * z * 2.6,
+        speed: 14 + z * z * 95,
+      };
+    });
   }
 
   ctx.clearRect(0, 0, width, height);
   const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, "#152969");
+  gradient.addColorStop(0, "#1b3486");
+  gradient.addColorStop(0.5, "#152969");
   gradient.addColorStop(1, "#060914");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  // 上部の地平線グロー（奥行き感の強調）
+  const glow = ctx.createRadialGradient(width / 2, -40, 20, width / 2, -40, height * 0.7);
+  glow.addColorStop(0, "rgba(72, 247, 255, 0.22)");
+  glow.addColorStop(1, "rgba(72, 247, 255, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+
+  // プレイヤー位置に応じた水平パララックス（近い星ほど大きく動く）
+  const parallax = ((playerX ?? width / 2) - width / 2) * 0.06;
+
   for (const star of state.stars) {
     star.y += star.speed * delta;
     if (star.y > height) {
       star.y = -4;
       star.x = Math.random() * width;
     }
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-    ctx.fill();
+    const px = star.x - parallax * star.z;
+    ctx.globalAlpha = 0.4 + star.z * 0.55;
+    ctx.fillStyle = "#ffffff";
+    if (star.z > 0.6) {
+      // 近い星は縦に伸ばしてスピード感のある流線に
+      const len = star.size * (1.5 + star.z * 3);
+      ctx.beginPath();
+      ctx.ellipse(px, star.y, star.size * 0.7, len, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(px, star.y, star.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
+  ctx.globalAlpha = 1;
 }
 
 function drawPlayer(player) {
   ctx.save();
   ctx.translate(player.x, player.y);
-  ctx.shadowColor = "#48f7ff";
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = "#f5fbff";
+
+  // 炎（機体の後ろに先に描画）
+  ctx.save();
+  ctx.shadowColor = "#ff8a2a";
+  ctx.shadowBlur = 16;
+  const flameLen = 42 + Math.random() * 12;
+  const flame = ctx.createLinearGradient(0, 22, 0, flameLen);
+  flame.addColorStop(0, "#fff2a8");
+  flame.addColorStop(0.5, "#ff8a2a");
+  flame.addColorStop(1, "rgba(255, 80, 0, 0)");
+  ctx.fillStyle = flame;
+  ctx.beginPath();
+  ctx.moveTo(-11, 22);
+  ctx.lineTo(0, flameLen);
+  ctx.lineTo(11, 22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // 機体本体：左右グラデで金属的な陰影をつける
+  ctx.shadowColor = "rgba(72, 247, 255, 0.6)";
+  ctx.shadowBlur = 16;
+  const body = ctx.createLinearGradient(-23, 0, 23, 0);
+  body.addColorStop(0, "#7f97b5");   // 暗side
+  body.addColorStop(0.45, "#eef6ff");
+  body.addColorStop(0.6, "#ffffff"); // ハイライト
+  body.addColorStop(1, "#9fb2cc");
+  ctx.fillStyle = body;
   ctx.beginPath();
   ctx.moveTo(0, -34);
   ctx.lineTo(23, 22);
@@ -140,29 +198,67 @@ function drawPlayer(player) {
   ctx.lineTo(-23, 22);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "#48f7ff";
+
+  // 中央の明るいハイライトのスジ
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.moveTo(0, -30);
+  ctx.lineTo(4, 12);
+  ctx.lineTo(-4, 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // コックピット：ラジアルグラデのガラス球
+  const glass = ctx.createRadialGradient(-3, -11, 1, 0, -8, 11);
+  glass.addColorStop(0, "#d7fbff");
+  glass.addColorStop(0.5, "#48f7ff");
+  glass.addColorStop(1, "#0a6f86");
+  ctx.fillStyle = glass;
   ctx.beginPath();
   ctx.arc(0, -8, 9, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#ff8a2a";
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
   ctx.beginPath();
-  ctx.moveTo(-10, 23);
-  ctx.lineTo(0, 42 + Math.random() * 10);
-  ctx.lineTo(10, 23);
+  ctx.arc(-3, -11, 2.4, 0, Math.PI * 2);
   ctx.fill();
+
   ctx.restore();
 }
 
-function drawItem(item) {
+function drawItem(item, scale) {
+  const glyph = item.type === "meteor" ? "☄️" : item.type === "star" ? "⭐" : "💎";
+  const r = item.radius * scale;
+
+  // 接地・浮遊を感じさせるキャストシャドウ（手前ほど濃く大きく）
+  ctx.save();
+  ctx.globalAlpha = 0.18 + (scale - 0.35) * 0.22;
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  ctx.ellipse(item.x + r * 0.35, item.y + r * 0.9, r * 0.8, r * 0.32, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
   ctx.save();
   ctx.translate(item.x, item.y);
   ctx.rotate(item.spin);
-  ctx.font = `${item.radius * 2}px serif`;
+  ctx.font = `${r * 2}px serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.shadowBlur = 14;
+
+  // 擬似押し出し（暗いコピーをズラして重ね、厚みを出す）
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.filter = "brightness(0.35)";
+  ctx.fillText(glyph, r * 0.16, r * 0.16);
+  ctx.restore();
+
+  // 本体（グロー付き）
+  ctx.shadowBlur = 16;
   ctx.shadowColor = item.type === "meteor" ? "#ff5b5b" : "#ffe66d";
-  ctx.fillText(item.type === "meteor" ? "☄️" : item.type === "star" ? "⭐" : "💎", 0, 0);
+  ctx.fillText(glyph, 0, 0);
   ctx.restore();
 }
 
@@ -231,7 +327,7 @@ function loop(now) {
   state.spawnTimer -= delta;
   if (state.hitFlash > 0) state.hitFlash -= delta;
 
-  drawBackground(rect.width, rect.height, delta);
+  drawBackground(rect.width, rect.height, delta, state.player.x);
 
   if (state.spawnTimer <= 0) {
     spawnItem(rect.width);
@@ -247,13 +343,15 @@ function loop(now) {
 
   for (let i = state.items.length - 1; i >= 0; i -= 1) {
     const item = state.items[i];
-    item.y += item.speed * delta;
+    const scale = perspectiveScale(item.y, state.player.y);
+    // 手前ほど速く迫る（遠近の加速感）
+    item.y += item.speed * (0.55 + scale * 0.6) * delta;
     item.spin += delta * 2.5;
-    drawItem(item);
+    drawItem(item, scale);
 
     const dx = item.x - state.player.x;
     const dy = item.y - state.player.y;
-    const hit = Math.hypot(dx, dy) < item.radius + state.player.radius;
+    const hit = Math.hypot(dx, dy) < item.radius * scale + state.player.radius;
     if (hit) {
       if (item.type === "meteor") {
         state.score -= 15;
